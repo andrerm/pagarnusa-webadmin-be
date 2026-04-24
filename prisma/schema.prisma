@@ -1,0 +1,343 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model detil_kepengurusan {
+  id_detil_kepengurusan Int           @id @default(autoincrement())
+  kepengurusan_id       Int?          @default(0)
+  kode_wilayah          String?       @db.VarChar(128)
+  pribadi_id            Int?          @default(0)
+  jabatan_id            Int?          @default(0)
+  jabatan_pn            String?       @db.VarChar(256)
+  is_active             Int?          @default(1) @db.TinyInt
+  OldKodeWilayah        String?       @db.VarChar(50)
+  IdWilayah             Int?
+  created               DateTime?     @default(now()) @db.DateTime(0)
+  updated               DateTime?     @db.DateTime(0)
+  jabatan               jabatan?      @relation(fields: [jabatan_id], references: [id_jabatan], onDelete: NoAction, onUpdate: NoAction, map: "detil_jabatan_FK")
+  kepengurusan          kepengurusan? @relation(fields: [kepengurusan_id], references: [id_kepengurusan], onDelete: NoAction, onUpdate: NoAction, map: "detil_kepengurusan_FK")
+  pribadi               pribadi?      @relation(fields: [pribadi_id], references: [idpribadi], onDelete: NoAction, onUpdate: NoAction, map: "detil_pribadi_FK")
+
+  @@index([jabatan_id], map: "detil_jabatan_FK")
+  @@index([kepengurusan_id], map: "detil_kepengurusan_FK")
+  @@index([pribadi_id], map: "detil_pribadi_FK")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model jabatan {
+  id_jabatan         Int                  @id @default(autoincrement())
+  nama               String?              @db.VarChar(512)
+  json_jabatan       String?              @db.Text
+  level_id           Int?
+  created            DateTime?            @default(now()) @db.DateTime(0)
+  updated            DateTime?            @db.DateTime(0)
+  detil_kepengurusan detil_kepengurusan[]
+  level              level?               @relation(fields: [level_id], references: [id_level], onDelete: NoAction, onUpdate: NoAction, map: "jabatan_level_FK")
+
+  @@index([level_id], map: "jabatan_level_FK")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model kabupaten {
+  id               Int         @id @default(autoincrement())
+  idParent         Int?
+  kodeShort        String?     @db.VarChar(20)
+  kodeFull         String?     @db.VarChar(20)
+  kode             String?     @db.VarChar(20)
+  nama             String?     @db.VarChar(150)
+  oldIdDb          String?     @db.VarChar(20)
+  oldId            String?     @db.VarChar(20)
+  oldNama          String?     @db.VarChar(150)
+  oldKodeWilayahPn String?     @db.VarChar(20)
+  IsPcKhusus       Boolean?    @default(dbgenerated("b'0'")) @db.Bit(1)
+  kodefull_pecahan String?     @db.VarChar(20)
+  provinsi         provinsi?   @relation(fields: [idParent], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kabupaten_prov_FK")
+  kecamatan        kecamatan[]
+  penomoran        penomoran[]
+
+  @@index([idParent], map: "kabupaten_prov_FK")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model kecamatan {
+  id               Int         @id @default(autoincrement())
+  idParent         Int?
+  kodeShort        String?     @db.VarChar(20)
+  kodeFull         String?     @db.VarChar(20)
+  kode             String?     @db.VarChar(20)
+  nama             String?     @db.VarChar(150)
+  oldIdDb          String?     @db.VarChar(20)
+  oldId            String?     @db.VarChar(20)
+  oldNama          String?     @db.VarChar(150)
+  oldKodeWilayahPn String?     @db.VarChar(20)
+  kabupaten        kabupaten?  @relation(fields: [idParent], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kecamatan_kabupaten_FK")
+  kelurahan        kelurahan[]
+  latihan          latihan[]
+
+  @@index([idParent], map: "kecamatan_kabupaten_FK")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model kelurahan {
+  id               Int        @id @default(autoincrement())
+  idParent         Int?
+  kodeShort        String?    @db.VarChar(20)
+  kodeFull         String?    @db.VarChar(20)
+  kode             String?    @db.VarChar(20)
+  nama             String?    @db.VarChar(150)
+  oldIdDb          String?    @db.VarChar(20)
+  oldId            String?    @db.VarChar(20)
+  oldNama          String?    @db.VarChar(150)
+  oldKodeWilayahPn String?    @db.VarChar(20)
+  kecamatan        kecamatan? @relation(fields: [idParent], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "kelurahan_kecamatan_FK")
+
+  @@index([idParent], map: "kelurahan_kecamatan_FK")
+}
+
+model kepengurusan {
+  id_kepengurusan    Int                  @id @default(autoincrement())
+  level_id           Int?                 @default(0)
+  nama_kepengurusan  String?              @db.VarChar(1024)
+  kode_wilayah       String?              @db.VarChar(128)
+  periode_mulai      DateTime?            @db.DateTime(0)
+  periode_selesai    DateTime?            @db.DateTime(0)
+  is_active          Int?                 @default(0) @db.TinyInt
+  is_pengurus        Int?                 @default(0) @db.TinyInt
+  json_kepengurusan  String?              @db.Text
+  url_file           String?              @db.Text
+  OldKodeWilayah     String?              @db.VarChar(100)
+  IdWilayah          Int?
+  created            DateTime?            @default(now()) @db.DateTime(0)
+  updated            DateTime?            @db.DateTime(0)
+  detil_kepengurusan detil_kepengurusan[]
+  level              level?               @relation(fields: [level_id], references: [id_level], onDelete: NoAction, onUpdate: NoAction, map: "kepengurusan_level_FK")
+
+  @@index([level_id], map: "kepengurusan_level_FK")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model koneksi_eksternal {
+  id        Int       @id @default(autoincrement())
+  nama      String?   @db.VarChar(512)
+  url       String    @db.VarChar(100)
+  isprod    Int?      @default(0) @db.TinyInt
+  isenabled Int?      @default(0) @db.TinyInt
+  pic       String?   @db.VarChar(36)
+  created   DateTime? @default(now()) @db.DateTime(0)
+  updated   DateTime? @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model latihan {
+  id_latihan   Int        @id @default(autoincrement())
+  pelatih_id   Int?
+  kecamatan_id Int?       @default(0)
+  padepokan_id Int?
+  sabuk        String?    @db.VarChar(256)
+  tgl_mulai    DateTime?  @db.DateTime(0)
+  tgl_selesai  DateTime?  @db.DateTime(0)
+  latlong      String?    @db.VarChar(512)
+  is_active    Int?       @default(0) @db.TinyInt
+  created      DateTime?  @default(now()) @db.DateTime(0)
+  updated      DateTime?  @db.DateTime(0)
+  kecamatan    kecamatan? @relation(fields: [kecamatan_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "latihan_kecamatan_FK")
+  padepokan    padepokan? @relation(fields: [padepokan_id], references: [id_padepokan], onDelete: NoAction, onUpdate: NoAction, map: "latihan_padepokan_FK")
+  pribadi      pribadi?   @relation(fields: [pelatih_id], references: [idpribadi], onDelete: NoAction, onUpdate: NoAction, map: "latihan_pribadi_FK")
+
+  @@index([kecamatan_id], map: "latihan_kecamatan_FK")
+  @@index([padepokan_id], map: "latihan_padepokan_FK")
+  @@index([pelatih_id], map: "latihan_pribadi_FK")
+}
+
+model level {
+  id_level     Int            @id @default(autoincrement())
+  tingkat      String?        @db.VarChar(256)
+  nama         String?        @db.VarChar(256)
+  json_level   String?        @db.Text
+  created      DateTime?      @default(now()) @db.DateTime(0)
+  updated      DateTime?      @db.DateTime(0)
+  jabatan      jabatan[]
+  kepengurusan kepengurusan[]
+}
+
+model padepokan {
+  id_padepokan Int       @id @default(autoincrement())
+  nama         String?   @db.VarChar(256)
+  alamat       String?   @db.VarChar(1024)
+  telp         String?   @db.VarChar(256)
+  created      DateTime? @default(now()) @db.DateTime(0)
+  updated      DateTime? @db.DateTime(0)
+  latihan      latihan[]
+}
+
+model penomoran {
+  IdPenomoran Int        @id @default(autoincrement())
+  IdPribadi   Int?
+  IdProv      Int?
+  IdKota      Int?
+  NoUrut      Int?
+  KodeKotaPn  String?    @db.VarChar(20)
+  NoKta       String?    @db.VarChar(15)
+  Created     DateTime?  @default(now()) @db.DateTime(0)
+  Updated     DateTime?  @db.DateTime(0)
+  kabupaten   kabupaten? @relation(fields: [IdKota], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "penomoran_kota_FK")
+  pribadi     pribadi?   @relation(fields: [IdPribadi], references: [idpribadi], onDelete: NoAction, onUpdate: NoAction, map: "penomoran_pribadi_FK")
+  provinsi    provinsi?  @relation(fields: [IdProv], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "penomoran_provinsi_FK")
+
+  @@index([IdKota], map: "penomoran_kota_FK")
+  @@index([IdPribadi], map: "penomoran_pribadi_FK")
+  @@index([IdProv], map: "penomoran_provinsi_FK")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model permission {
+  id               Int                @id @default(autoincrement())
+  parent           Int?               @default(0)
+  icon             String?            @db.VarChar(50)
+  title            String?            @db.VarChar(75)
+  description      String?            @db.VarChar(150)
+  url              String?            @db.VarChar(150)
+  custom           String?            @db.VarChar(150)
+  priority         Int?               @default(0)
+  is_active        Int?               @default(0)
+  action           Int                @default(1)
+  created          DateTime           @default(now()) @db.DateTime(0)
+  updated          DateTime?          @db.DateTime(0)
+  roles_permission roles_permission[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pribadi {
+  idpribadi            Int                  @id @default(autoincrement())
+  publicid             String?              @db.VarChar(36)
+  nama                 String?              @db.VarChar(512)
+  tempat_lahir         String?              @db.VarChar(512)
+  tgl_lahir            DateTime?            @db.DateTime(0)
+  kelamin              String?              @db.VarChar(2)
+  gol_darah            String?              @db.VarChar(4)
+  kelurahan_ktp        String?              @db.VarChar(50)
+  kelurahan_domisili   String?              @db.VarChar(50)
+  agama                String?              @db.VarChar(512)
+  stat_kawin           String?              @db.VarChar(50)
+  no_kk                String?              @db.VarChar(50)
+  no_ktp               String?              @db.VarChar(50)
+  is_wni               Boolean?             @default(true)
+  json_alamat          String?              @db.Text
+  json_pendidikan      String?              @db.Text
+  json_pekerjaan       String?              @db.Text
+  json_perguruan       String?              @db.Text
+  is_pelatih           Boolean?             @default(false)
+  is_pengurus          Boolean?             @default(false)
+  is_verified          Boolean?             @default(false)
+  is_admin             Boolean?             @default(false)
+  jabatan_pn           String?              @default("Unverified") @db.VarChar(1024)
+  verified_date        DateTime?            @db.DateTime(0)
+  verifier             String?              @db.VarChar(64)
+  email                String?              @db.VarChar(256)
+  nokta                String?              @db.VarChar(15)
+  nokta_lama           String?              @db.VarChar(25)
+  url_ktp              String?              @db.VarChar(150)
+  url_foto             String?              @db.VarChar(150)
+  nohp                 String?              @db.VarChar(20)
+  is_email_first_login Int?                 @default(1) @db.TinyInt
+  scopedata            String?              @db.VarChar(500)
+  IdKelurahanKtp       Int?
+  IdKabupatenDomisili  Int?
+  IdKelurahanDomisili  Int?
+  OldKelurahanKtp      String?              @db.VarChar(50)
+  OldKelurahanDomisili String?              @db.VarChar(50)
+  KabupatenKtp         String?              @db.VarChar(50)
+  KabupatenDomisili    String?              @db.VarChar(50)
+  created              DateTime             @default(now()) @db.DateTime(0)
+  updated              DateTime?            @db.DateTime(0)
+  resetby              String?              @db.VarChar(64)
+  resetdate            DateTime?            @db.DateTime(0)
+  detil_kepengurusan   detil_kepengurusan[]
+  latihan              latihan[]
+  penomoran            penomoran[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model provinsi {
+  id               Int         @id @default(autoincrement())
+  kodeShort        String?     @db.VarChar(20)
+  kodeFull         String?     @db.VarChar(20)
+  kode             String?     @db.VarChar(20)
+  nama             String?     @db.VarChar(150)
+  oldIdDb          String?     @db.VarChar(20)
+  oldId            String?     @db.VarChar(20)
+  oldNama          String?     @db.VarChar(150)
+  oldKodeWilayahPn String?     @db.VarChar(20)
+  kabupaten        kabupaten[]
+  penomoran        penomoran[]
+}
+
+model roles {
+  id               Int                @id @default(autoincrement())
+  name             String             @db.VarChar(75)
+  is_deleted       Int?               @default(0)
+  is_locked        Int?               @default(0)
+  created          DateTime           @default(now()) @db.DateTime(0)
+  updated          DateTime?          @db.DateTime(0)
+  roles_permission roles_permission[]
+}
+
+model roles_menu {
+  Id       Int     @id @default(autoincrement())
+  IdRoles  Int
+  JsonMenu String? @db.Text
+}
+
+model roles_permission {
+  roles_id      Int
+  permission_id Int
+  created       DateTime   @default(now()) @db.DateTime(0)
+  roles         roles      @relation(fields: [roles_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_group2")
+  permission    permission @relation(fields: [permission_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_permission_group2")
+
+  @@id([roles_id, permission_id])
+  @@index([roles_id], map: "fk_group_idx")
+  @@index([permission_id], map: "fk_permission_idx")
+}
+
+model temp_updatefoto {
+  idpribadi       Int     @id @default(autoincrement())
+  url_foto        String? @db.VarChar(500)
+  url_ktp         String? @db.VarChar(500)
+  url_foto_new    String? @db.VarChar(500)
+  url_ktp_new     String? @db.VarChar(500)
+  done_migrasi    Bytes?  @default(dbgenerated("0x30")) @db.Binary(1)
+  done_create_url Bytes?  @default(dbgenerated("0x30")) @db.Binary(1)
+}
+
+model user {
+  iduser         Int       @id @default(autoincrement())
+  idpribadi      Int?
+  iduser_db_lama String?   @db.VarChar(128)
+  username       String?   @db.VarChar(1024)
+  surname        String?   @db.VarChar(1024)
+  lastname       String?   @db.VarChar(1024)
+  fullname       String?   @db.VarChar(1024)
+  email          String?   @db.VarChar(1024)
+  password       String?   @db.VarChar(1024)
+  isactive       Int?      @default(1)
+  googleid       String?   @db.VarChar(1024)
+  facebookid     String?   @db.VarChar(1024)
+  lastlogin      DateTime? @db.DateTime(0)
+  created        DateTime? @default(now()) @db.DateTime(0)
+  updated        DateTime? @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model user_roles {
+  iduserroles Int       @id @default(autoincrement())
+  iduser      Int
+  idroles     Int       @default(4)
+  created     DateTime? @default(now()) @db.DateTime(0)
+}
