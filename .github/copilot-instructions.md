@@ -513,5 +513,16 @@ REDIS_URL=redis://localhost:6379
 
 ---
 
+## 16. Prisma Rules
+- NEVER run prisma db push
+- NEVER run prisma migrate
+- NEVER suggest schema changes that would alter the existing MySQL database
+- The database schema is read-only — managed externally
+- Only prisma db pull and prisma generate are permitted
+- Treat schema.prisma as a reflection of the DB, not a source of truth for changes
+- If recommend to database change, tell me to change it externally
+
+---
+
 *Updated: April 2026 | Version: 2.0*
 *Related: [DOC1-overview-architecture.md](./useful-docs/DOC1-overview-architecture.md), Module PRDs (DOC2-prd-module-01 through 07)*
